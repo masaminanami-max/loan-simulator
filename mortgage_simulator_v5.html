@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>住宅ローンシミュレーター v5.1</title>
+<style>
+:root {
+  --navy:#1E2761; --teal:#00838F; --gold:#F59E0B;
+  --red:#C62828; --green:#2E7D32; --blue:#1565C0;
+  --bg:#F0F4F8; --card:#fff; --border:#E2E8F0;
+  --text:#1E293B; --muted:#64748B;
+  --good-bg:#E8F5E9; --good:#2E7D32;
+  --warn-bg:#FFF8E1; --warn:#E65100;
+  --bad-bg:#FFEBEE;  --bad:#C62828;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);
+  font-family:"Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif;
+  min-height:100vh;padding-bottom:90px;}
+
+/* ヘッダー */
+.header{background:linear-gradient(135deg,var(--navy),#2a3a8f);
+  padding:18px 16px 14px;position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.header h1{color:#fff;font-size:17px;font-weight:800;}
+.header p{color:rgba(255,255,255,.72);font-size:11px;margin-top:3px;}
+
+/* タブ */
+.tabs{display:flex;background:var(--navy);padding:0 8px 10px;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;gap:5px;
+  scrollbar-width:none;-ms-overflow-style:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab-btn{flex-shrink:0;padding:7px 11px;border-radius:99px;
+  background:rgba(255,255,255,.12);color:rgba(255,255,255,.7);
+  font-size:11px;font-weight:700;border:none;cursor:pointer;
+  white-space:nowrap;transition:all .2s;}
+.tab-btn.active{background:var(--gold);color:var(--navy);}
+
+/* ステータスバー */
+.status-bar{background:var(--navy);color:rgba(255,255,255,.8);
+  font-size:11px;padding:5px 16px;text-align:center;}
+.status-bar strong{color:var(--gold);}
+
+/* コンテンツ */
+.tab-content{display:none;padding:12px;}
+.tab-content.active{display:block;}
+
+/* カード */
+.card{background:var(--card);border-radius:16px;padding:14px;
+  margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.card-title{font-size:13px;font-weight:800;color:var(--navy);
+  margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.card-title::before{content:'';display:block;width:4px;height:15px;
+  background:var(--teal);border-radius:2px;}
+
+/* フォーム */
+.field{margin-bottom:12px;}
+.field label{font-size:11px;font-weight:700;color:var(--muted);
+  display:block;margin-bottom:5px;}
+.field input,.field select{width:100%;padding:12px 13px;font-size:16px;
+  border:1.5px solid var(--border);border-radius:12px;background:#fff;
+  color:var(--text);-webkit-appearance:none;transition:border-color .2s;}
+.field input:focus,.field select:focus{outline:none;border-color:var(--teal);
+  box-shadow:0 0 0 3px rgba(0,131,143,.12);}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* 分割実行 */
+.draw-row{display:grid;grid-template-columns:auto 1fr 1fr;
+  gap:8px;align-items:center;margin-bottom:8px;}
+.draw-badge{background:var(--navy);color:#fff;font-size:10px;
+  font-weight:800;padding:4px 7px;border-radius:6px;white-space:nowrap;}
+.draw-row input{padding:10px 11px;font-size:15px;
+  border:1.5px solid var(--border);border-radius:10px;width:100%;}
+.draw-row input:focus{outline:none;border-color:var(--teal);}
+
+/* フェーズ入力 */
+.phase-row{display:grid;grid-template-columns:auto 1fr 1fr;
+  gap:8px;align-items:center;margin-bottom:8px;}
+.phase-badge{background:var(--teal);color:#fff;font-size:10px;
+  font-weight:800;padding:4px 7px;border-radius:6px;white-space:nowrap;}
+.phase-row input{padding:10px 11px;font-size:15px;
+  border:1.5px solid var(--border);border-radius:10px;width:100%;}
+.phase-row input:focus{outline:none;border-color:var(--teal);}
+
+/* ボタン */
+.calc-btn{width:100%;padding:15px;font-size:16px;font-weight:800;
+  background:linear-gradient(135deg,var(--teal),#006064);color:#fff;
+  border:none;border-radius:14px;cursor:pointer;
+  box-shadow:0 4px 14px rgba(0,131,143,.35);transition:transform .1s;}
+.calc-btn:active{transform:scale(.98);}
+.reset-btn{width:100%;padding:11px;font-size:13px;font-weight:700;
+  background:#EEF2F7;color:var(--muted);border:none;border-radius:12px;
+  cursor:pointer;margin-top:8px;}
+
+/* 結果ヒーロー */
+.result-hero{background:linear-gradient(135deg,var(--navy),#2a3a8f);
+  border-radius:16px;padding:18px 16px;margin-bottom:10px;color:#fff;}
+.result-hero .label{font-size:11px;opacity:.75;margin-bottom:3px;}
+.result-hero .big{font-size:36px;font-weight:900;letter-spacing:-1px;}
+.result-hero .sub{font-size:11px;opacity:.78;margin-top:5px;}
+.result-hero .row2{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;}
+.result-hero .item2 .v{font-size:20px;font-weight:900;}
+.result-hero .gold{color:var(--gold);}
+
+/* メトリクス */
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.metric{background:var(--card);border-radius:14px;padding:13px;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.metric .ml{font-size:10px;color:var(--muted);font-weight:700;margin-bottom:5px;}
+.metric .mv{font-size:21px;font-weight:900;color:var(--navy);line-height:1;}
+.metric .ms{font-size:10px;color:var(--muted);margin-top:4px;}
+
+/* バッジ */
+.badge{display:inline-block;padding:3px 8px;border-radius:99px;
+  font-size:10px;font-weight:800;margin-top:4px;}
+.good-b{background:var(--good-bg);color:var(--good);}
+.warn-b{background:var(--warn-bg);color:var(--warn);}
+.bad-b {background:var(--bad-bg); color:var(--bad);}
+
+/* ゲージ */
+.gauge-bg{background:#EEF2F7;border-radius:99px;height:10px;overflow:hidden;}
+.gauge-fill{height:10px;border-radius:99px;transition:width .5s;}
+.gauge-lbl{display:flex;justify-content:space-between;
+  font-size:9px;color:var(--muted);margin-top:2px;}
+
+/* フェーズ返済表 */
+.phase-table{width:100%;border-collapse:collapse;font-size:12px;}
+.phase-table th{background:var(--navy);color:#fff;padding:9px 7px;
+  font-size:11px;font-weight:700;text-align:center;}
+.phase-table td{padding:9px 7px;border-bottom:1px solid var(--border);text-align:right;}
+.phase-table td:first-child{text-align:left;color:var(--navy);font-weight:700;}
+.phase-table .hl{background:#FFF8E1;}
+
+/* スケジュール表 */
+.sched-wrap{overflow-x:auto;}
+.sched-table{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;}
+.sched-table th{background:var(--navy);color:#fff;padding:7px 3px;
+  font-size:10px;text-align:center;}
+.sched-table td{padding:6px 3px;border-bottom:1px solid var(--border);
+  text-align:right;overflow:hidden;}
+.sched-table td:first-child{text-align:center;color:var(--muted);font-size:10px;}
+.sched-table th:nth-child(1),.sched-table td:nth-child(1){width:10%;}
+.sched-table th:nth-child(2),.sched-table td:nth-child(2){width:14%;}
+.sched-table th:nth-child(3),.sched-table td:nth-child(3){width:19%;}
+.sched-table th:nth-child(4),.sched-table td:nth-child(4){width:19%;}
+.sched-table th:nth-child(5),.sched-table td:nth-child(5){width:19%;}
+.sched-table th:nth-child(6),.sched-table td:nth-child(6){width:19%;}
+.sched-table .io{background:#FFF3CD;}
+.sched-table .sw{background:#E3F2FD;font-weight:700;}
+
+/* 顧客シート */
+.cust-section{margin-bottom:14px;}
+.cust-hdr{background:var(--navy);color:#fff;padding:10px 14px;
+  border-radius:12px 12px 0 0;font-size:13px;font-weight:800;}
+.cust-hdr.red{background:var(--red);}
+.cust-body{background:var(--card);border:1px solid var(--border);
+  border-top:none;border-radius:0 0 12px 12px;overflow:hidden;}
+.cust-cond{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;
+  background:var(--border);}
+.cond-item{background:var(--card);padding:12px 10px;text-align:center;}
+.cond-item .cl{font-size:10px;color:var(--muted);font-weight:700;margin-bottom:4px;}
+.cond-item .cv{font-size:16px;font-weight:900;color:var(--blue);}
+.cust-table{width:100%;border-collapse:collapse;font-size:12px;}
+.cust-table th{background:#F4F7FB;color:var(--navy);padding:9px 7px;
+  font-size:11px;font-weight:700;text-align:center;
+  border-bottom:2px solid var(--border);}
+.cust-table td{padding:9px 7px;border-bottom:1px solid var(--border);text-align:right;}
+.cust-table td:first-child{text-align:left;font-weight:700;color:var(--text);}
+.cust-table .main-col{background:var(--good-bg);color:var(--blue);
+  font-weight:900;font-size:14px;}
+.cust-table .diff-pos{color:var(--green);font-weight:700;}
+.cust-table .diff-neg{color:var(--red);font-weight:700;}
+.stress-row td{background:#FFEBEE;}
+.stress-row-0 td{background:#FFF;} /* 基準 */
+.stress-row-1 td{background:#FFF8E1;}
+.stress-row-2 td{background:#FFEBEE;}
+.stress-row-3 td{background:#FFCDD2;}
+.stress-main{color:var(--red);font-weight:900;font-size:14px;}
+.stress-diff{color:var(--red);font-weight:700;font-size:11px;}
+
+/* コメント */
+.comment-box{background:linear-gradient(135deg,#FFF8E1,#FFFDE7);
+  border:1px solid #F9A825;border-radius:14px;padding:13px;
+  font-size:12px;line-height:1.7;color:#3E2723;}
+.comment-box .ct{font-weight:800;font-size:13px;margin-bottom:6px;color:var(--warn);}
+
+/* 固定計算ボタン */
+.floating-btn{position:fixed;bottom:14px;left:12px;right:12px;
+  background:linear-gradient(135deg,var(--teal),#006064);
+  color:#fff;border:none;border-radius:16px;padding:15px;
+  font-size:15px;font-weight:800;cursor:pointer;z-index:200;
+  box-shadow:0 8px 24px rgba(0,131,143,.4);
+  display:flex;align-items:center;justify-content:center;gap:8px;}
+.floating-btn:active{transform:scale(.98);}
+.hint{font-size:10px;color:var(--muted);margin-top:3px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏠 住宅ローンシミュレーター</h1>
+  <p>分割実行対応 ／ 北陸銀行スマホ最適化版 v5.1</p>
+</div>
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('input')">📝 入力</button>
+  <button class="tab-btn" onclick="switchTab('result')">📊 結果</button>
+  <button class="tab-btn" onclick="switchTab('schedule')">📋 返済表</button>
+  <button class="tab-btn" onclick="switchTab('customer')">👤 顧客用</button>
+  <button class="tab-btn" onclick="switchTab('prepay')">💰 繰上返済</button>
+</div>
+<div id="sbar" class="status-bar">入力後に「計算する」を押してください</div>
+
+<!-- ════════ 入力タブ ════════ -->
+<div id="tab-input" class="tab-content active">
+
+  <div class="card">
+    <div class="card-title">基本条件</div>
+    <div class="grid2">
+      <div class="field">
+        <label>借入額（万円）</label>
+        <input type="number" id="loan" value="4000" inputmode="numeric"/>
+      </div>
+      <div class="field">
+        <label>借入期間（年）</label>
+        <input type="number" id="years" value="40" inputmode="numeric"/>
+      </div>
+    </div>
+    <div class="field">
+      <label>計算モード</label>
+      <select id="mode" onchange="updateModeUI()">
+        <option value="split">分割実行あり（建築中など）</option>
+        <option value="normal">通常（一括実行）</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 分割実行 -->
+  <div class="card" id="split-card">
+    <div class="card-title">分割実行条件</div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:10px">
+      第1回を0ヶ月後として入力。第2回以降は第1回からの経過月数。
+    </p>
+    <div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;margin-bottom:6px">
+      <div></div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-align:center">タイミング（ヶ月後）</div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-align:center">金額（万円）</div>
+    </div>
+    <div class="draw-row">
+      <span class="draw-badge">第1回</span>
+      <input type="number" id="d1t" value="0" inputmode="numeric" placeholder="0"/>
+      <input type="number" id="d1a" value="4000" inputmode="numeric" placeholder="万円"/>
+    </div>
+    <div class="draw-row">
+      <span class="draw-badge">第2回</span>
+      <input type="number" id="d2t" value="" inputmode="numeric" placeholder="ヶ月後"/>
+      <input type="number" id="d2a" value="" inputmode="numeric" placeholder="万円"/>
+    </div>
+    <div class="draw-row">
+      <span class="draw-badge">第3回</span>
+      <input type="number" id="d3t" value="" inputmode="numeric" placeholder="任意"/>
+      <input type="number" id="d3a" value="" inputmode="numeric" placeholder="任意"/>
+    </div>
+    <div class="draw-row">
+      <span class="draw-badge">第4回</span>
+      <input type="number" id="d4t" placeholder="任意" inputmode="numeric"/>
+      <input type="number" id="d4a" placeholder="任意" inputmode="numeric"/>
+    </div>
+    <div class="draw-row">
+      <span class="draw-badge">第5回</span>
+      <input type="number" id="d5t" placeholder="任意" inputmode="numeric"/>
+      <input type="number" id="d5a" placeholder="任意" inputmode="numeric"/>
+    </div>
+    <div class="field" style="margin-top:10px">
+      <label>元金返済開始（第1回から何ヶ月後）</label>
+      <input type="number" id="repayStart" value="0" inputmode="numeric"/>
+      <div class="hint">例：9 → 10ヶ月目から元利金等返済スタート</div>
+    </div>
+  </div>
+
+  <!-- 通常モード -->
+  <div class="card" id="normal-card" style="display:none">
+    <div class="card-title">一括実行</div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:8px">借入と同時に全額実行します。</p>
+  </div>
+
+  <!-- 金利フェーズ -->
+  <div class="card">
+    <div class="card-title">金利フェーズ（最大5段階）</div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:10px">
+      Phase1から順番に適用。最後のフェーズが残り期間に適用されます。
+    </p>
+    <div style="display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;margin-bottom:6px">
+      <div></div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-align:center">期間（年）</div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-align:center">金利（%）</div>
+    </div>
+    <div class="phase-row">
+      <span class="phase-badge">Phase1</span>
+      <input type="number" id="p1y" value="3" step="1" inputmode="decimal"/>
+      <input type="number" id="p1r" value="0.55" step="0.01" inputmode="decimal"/>
+    </div>
+    <div class="phase-row">
+      <span class="phase-badge">Phase2</span>
+      <input type="number" id="p2y" value="2" step="1" inputmode="decimal" placeholder="任意"/>
+      <input type="number" id="p2r" value="1.20" step="0.01" inputmode="decimal" placeholder="任意"/>
+    </div>
+    <div class="phase-row">
+      <span class="phase-badge">Phase3</span>
+      <input type="number" id="p3y" placeholder="任意" inputmode="decimal"/>
+      <input type="number" id="p3r" placeholder="任意" step="0.01" inputmode="decimal"/>
+    </div>
+    <div class="phase-row">
+      <span class="phase-badge">Phase4</span>
+      <input type="number" id="p4y" placeholder="任意" inputmode="decimal"/>
+      <input type="number" id="p4r" placeholder="任意" step="0.01" inputmode="decimal"/>
+    </div>
+    <div class="phase-row">
+      <span class="phase-badge">Phase5</span>
+      <input type="number" id="p5y" placeholder="任意" inputmode="decimal"/>
+      <input type="number" id="p5r" placeholder="任意" step="0.01" inputmode="decimal"/>
+    </div>
+  </div>
+
+  <!-- 収入・生活費 -->
+  <div class="card">
+    <div class="card-title">収入・家計チェック</div>
+    <div class="grid2">
+      <div class="field">
+        <label>世帯年収（万円）</label>
+        <input type="number" id="inc1" value="700" inputmode="numeric"/>
+      </div>
+      <div class="field">
+        <label>手取り見込み率（%）</label>
+        <input type="number" id="takehome" value="80" inputmode="numeric"/>
+      </div>
+      <div class="field">
+        <label>主債務者 年齢</label>
+        <input type="number" id="age1" value="35" inputmode="numeric"/>
+      </div>
+      <div class="field">
+        <label>連帯債務者 年齢</label>
+        <input type="number" id="age2" value="33" inputmode="numeric"/>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">月額生活費（家計チェック用）</div>
+    <div class="grid2">
+      <div class="field">
+        <label>食費（円）</label>
+        <input type="number" id="food" value="70000" inputmode="numeric"/>
+      </div>
+      <div class="field">
+        <label>子ども関連費（円）</label>
+        <input type="number" id="kids" value="30000" inputmode="numeric"/>
+      </div>
+      <div class="field">
+        <label>その他生活費（円）</label>
+        <input type="number" id="living" value="100000" inputmode="numeric"/>
+      </div>
+      <div class="field">
+        <label>将来バッファ（円）</label>
+        <input type="number" id="buffer" value="30000" inputmode="numeric"/>
+      </div>
+    </div>
+  </div>
+
+  <button class="calc-btn" onclick="calculate()">▶ 計算する</button>
+  <button class="reset-btn" onclick="resetAll()">初期値に戻す</button>
+  <div style="height:80px"></div>
+</div>
+
+<!-- ════════ 結果タブ ════════ -->
+<div id="tab-result" class="tab-content">
+  <div class="result-hero">
+    <div class="label">元利金等 初回月返済額</div>
+    <div class="big" id="r-monthly">-</div>
+    <div class="sub" id="r-sub">計算するを押してください</div>
+    <div class="row2">
+      <div class="item2"><div class="label">総返済額</div><div class="v" id="r-total">-</div></div>
+      <div class="item2"><div class="label">うち総利息</div><div class="v gold" id="r-int">-</div></div>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric">
+      <div class="ml">📊 年間返済比率</div>
+      <div class="mv" id="r-ratio">-</div>
+      <div class="gauge-bg"><div class="gauge-fill" id="r-gauge" style="width:0%"></div></div>
+      <div class="gauge-lbl"><span>0%</span><span>25%</span><span>35%+</span></div>
+      <div id="r-ratio-b"></div>
+    </div>
+    <div class="metric">
+      <div class="ml">💰 家計残額（月）</div>
+      <div class="mv" id="r-balance">-</div>
+      <div class="ms" id="r-balance-s"></div>
+      <div id="r-balance-b"></div>
+    </div>
+    <div class="metric">
+      <div class="ml">🏠 世帯 月返済額</div>
+      <div class="mv" id="r-main">-</div>
+      <div class="ms" id="r-main-s">-</div>
+    </div>
+    <div class="metric">
+      <div class="ml">📅 年間 返済総額</div>
+      <div class="mv" id="r-co">-</div>
+      <div class="ms" id="r-co-s">-</div>
+    </div>
+    <div class="metric">
+      <div class="ml">🛡 団信上乗せ影響</div>
+      <div class="mv" id="r-danshin">-</div>
+      <div class="ms" id="r-danshin-s">-</div>
+    </div>
+    <div class="metric">
+      <div class="ml">🏗 利息のみ期間</div>
+      <div class="mv" id="r-ioperiod">-</div>
+      <div class="ms" id="r-ioperiod-s">-</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">フェーズ別 月返済額</div>
+    <table class="phase-table" id="phase-table">
+      <thead><tr>
+        <th style="text-align:left">フェーズ</th>
+        <th>金利</th><th>期間</th><th>月返済額</th>
+      </tr></thead>
+      <tbody id="phase-tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="comment-box">
+    <div class="ct">📝 担当者メモ</div>
+    <div id="r-comment">ここにコメントが出ます。</div>
+  </div>
+  <div style="height:80px"></div>
+</div>
+
+<!-- ════════ 返済表タブ ════════ -->
+<div id="tab-schedule" class="tab-content">
+  <div class="card">
+    <div class="card-title">月次返済スケジュール（先頭60ヶ月）</div>
+    <p style="font-size:10px;color:var(--muted);margin-bottom:8px">
+      🟡 利息のみ期間　🔵 金利切替月
+    </p>
+    <table class="sched-table">
+        <thead><tr>
+          <th>月</th><th>金利%</th>
+          <th>月返済</th><th>利息</th><th>元金</th><th>残高</th>
+        </tr></thead>
+        <tbody id="sched-tbody"></tbody>
+      </table>
+  </div>
+  <div style="height:80px"></div>
+</div>
+
+<!-- ════════ 顧客用タブ ════════ -->
+<div id="tab-customer" class="tab-content">
+
+  <!-- 借入条件 -->
+  <div class="cust-section">
+    <div class="cust-hdr">📋 ご契約条件</div>
+    <div class="cust-body">
+      <div class="cust-cond" id="cust-cond"></div>
+      <div style="padding:10px 14px;font-size:11px;color:var(--muted);
+        border-top:1px solid var(--border)" id="cust-phases"></div>
+    </div>
+  </div>
+
+  <!-- 期間別比較 -->
+  <div class="cust-section">
+    <div class="cust-hdr">📊 返済期間別 月額比較（フェーズ金利を適用）</div>
+    <div class="cust-body">
+      <div class="sched-wrap">
+        <table class="cust-table" id="cust-period-table">
+          <thead><tr id="cust-period-hdr"></tr></thead>
+          <tbody id="cust-period-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ストレステスト -->
+  <div class="cust-section">
+    <div class="cust-hdr red">⚠️ 金利ストレステスト（Phase1終了後の上昇シナリオ）</div>
+    <div class="cust-body">
+      <div class="sched-wrap">
+        <table class="cust-table" id="cust-stress-table">
+          <thead><tr>
+            <th style="text-align:left">シナリオ</th>
+            <th>4年目<br>月返済</th>
+            <th>35年</th>
+            <th id="st-main-hdr">設定期間</th>
+            <th>50年</th>
+            <th>基準比/月</th>
+            <th>年間増加</th>
+          </tr></thead>
+          <tbody id="cust-stress-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div style="font-size:10px;color:var(--muted);padding:8px 2px;line-height:1.6">
+    ※ 概算シミュレーションです。正式な返済予定表とは差が生じる場合があります。<br>
+    ※ 金利ストレスはPhase1終了後のフェーズ金利に上乗せして試算しています。
+  </div>
+  <div style="height:80px"></div>
+</div>
+
+
+<!-- ════════ 繰上返済タブ ════════ -->
+<div id="tab-prepay" class="tab-content">
+
+  <div class="card">
+    <div class="card-title">繰上返済の方法を選択</div>
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="mode-genkei" onclick="setPrepayMode('genkei')">
+        📉 返済額軽減型<br><span style="font-size:10px;font-weight:400">月々の返済額が減る</span>
+      </button>
+      <button class="mode-btn" id="mode-tanshuku" onclick="setPrepayMode('tanshuku')">
+        ⏩ 期間短縮型<br><span style="font-size:10px;font-weight:400">返済期間が縮まる</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">繰上返済の設定（最大3回）</div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:10px">
+      元金返済開始からの年数と繰上返済額を入力してください。
+    </p>
+    <div style="display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:6px;margin-bottom:6px">
+      <div></div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-align:center">タイミング<br>（元金開始から何年後）</div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-align:center">繰上返済額<br>（万円）</div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-align:center">実行時<br>残高確認</div>
+    </div>
+    <div class="prepay-row">
+      <span class="prepay-badge">1回目</span>
+      <input type="number" id="pr1y" value="5" inputmode="numeric" placeholder="年後"/>
+      <input type="number" id="pr1a" value="100" inputmode="numeric" placeholder="万円"/>
+      <div id="pr1bal" style="font-size:10px;color:var(--muted);text-align:center">－</div>
+    </div>
+    <div class="prepay-row">
+      <span class="prepay-badge">2回目</span>
+      <input type="number" id="pr2y" value="13" inputmode="numeric" placeholder="年後"/>
+      <input type="number" id="pr2a" value="100" inputmode="numeric" placeholder="万円"/>
+      <div id="pr2bal" style="font-size:10px;color:var(--muted);text-align:center">－</div>
+    </div>
+    <div class="prepay-row">
+      <span class="prepay-badge">3回目</span>
+      <input type="number" id="pr3y" value="20" inputmode="numeric" placeholder="年後"/>
+      <input type="number" id="pr3a" value="100" inputmode="numeric" placeholder="万円"/>
+      <div id="pr3bal" style="font-size:10px;color:var(--muted);text-align:center">－</div>
+    </div>
+    <button class="calc-btn" onclick="calcPrepay()" style="margin-top:10px">▶ 繰上返済をシミュレーション</button>
+  </div>
+
+  <div id="prepay-result" style="display:none">
+
+    <div class="saving-box" id="prepay-saving">
+      <div class="s-label">繰上返済による節約額（総支払削減）</div>
+      <div class="s-val" id="pr-saving">-</div>
+      <div class="s-sub" id="pr-saving-sub">-</div>
+      <div class="saving-grid">
+        <div class="saving-item">
+          <div class="s-label">通常の総支払</div>
+          <div class="sv" id="pr-total-normal">-</div>
+        </div>
+        <div class="saving-item">
+          <div class="s-label">繰上返済後の総支払</div>
+          <div class="sv" id="pr-total-after">-</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="prepay-section">
+      <div class="prepay-hdr">📊 月返済額の変化タイムライン</div>
+      <div style="overflow-x:auto">
+        <table class="prepay-timeline" id="prepay-table">
+          <thead><tr>
+            <th style="text-align:left">時期</th>
+            <th>金利%</th>
+            <th>月返済額</th>
+            <th>残高</th>
+            <th>変化</th>
+          </tr></thead>
+          <thead><tr>
+            <td colspan="5" style="background:#FFF3E0;color:#E65100;font-size:10px;font-weight:700;padding:5px 6px;text-align:left">
+              🟠 繰上返済実行行　🔴 繰上後の新しい返済額（▼差額表示）　🔵 金利更新
+            </td>
+          </tr></thead>
+          <tbody id="prepay-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="prepay-section" id="tanshuku-info" style="display:none">
+      <div class="prepay-hdr green">⏩ 期間短縮の効果</div>
+      <div style="padding:14px;font-size:13px;color:var(--dark)" id="tanshuku-detail"></div>
+    </div>
+
+  </div>
+  <div style="height:80px"></div>
+</div>
+
+<!-- 固定計算ボタン -->
+<button class="floating-btn" id="float-btn" onclick="calculate()">▶ 計算する</button>
+
+<script>
+// ═══════════════════════════════
+// ユーティリティ
+// ═══════════════════════════════
+const ge = id => document.getElementById(id);
+const gv = id => parseFloat(ge(id).value) || 0;
+const gi = id => parseInt(ge(id).value) || 0;
+
+function fmt(n){ return isFinite(n) ? Math.round(n).toLocaleString('ja-JP')+'円' : '-'; }
+function fmtM(n){ if(!isFinite(n)) return '-'; return (n/10000).toFixed(1)+'万円'; }
+function pct(n){ return isFinite(n) ? n.toFixed(1)+'%' : '-'; }
+
+function pmt(rate, nper, pv){
+  if(nper<=0||pv<=0) return 0;
+  if(rate===0) return pv/nper;
+  return pv*rate/(1-Math.pow(1+rate,-nper));
+}
+
+// ═══════════════════════════════
+// 入力収集
+// ═══════════════════════════════
+function getPhases(){
+  const ps=[];
+  for(let i=1;i<=5;i++){
+    const y=gv(`p${i}y`), r=gv(`p${i}r`);
+    if(y>0&&r>0) ps.push({years:y, rate:r});
+  }
+  return ps.length ? ps : [{years:gv('years'), rate:1.0}];
+}
+
+function getDrawMap(){
+  const m={};
+  for(let i=1;i<=5;i++){
+    const t=gv(`d${i}t`), a=gv(`d${i}a`);
+    if(a>0){
+      const monthNo = Math.round(t)+1; // 月番号(1始まり)
+      m[monthNo]=(m[monthNo]||0)+a*10000;
+    }
+  }
+  return m;
+}
+
+// ═══════════════════════════════
+// シミュレーション
+// ═══════════════════════════════
+function simulate(loanMan, totalYears, repayStartM, phases, drawMap, stressAdd=0){
+  const loan = loanMan*10000;
+  const repayMonths = totalYears*12 - repayStartM;
+  const phase1End = phases[0].years*12;
+  let balance=0, sched=[];
+
+  for(let i=1; i<=totalYears*12+repayStartM+5; i++){
+    balance += drawMap[i]||0;
+
+    if(i<=repayStartM){
+      // 利息のみ
+      const rm = phases[0].rate/100/12;
+      const interest = balance*rm;
+      sched.push({m:i,phase:'io',rate:phases[0].rate,pay:Math.round(interest),
+        int:Math.round(interest),prin:0,bal:Math.round(balance)});
+      // 残高変わらず
+
+    } else {
+      const elapsed = i-repayStartM-1; // 0始まり
+      if(elapsed>=repayMonths) break;
+      const rem = repayMonths-elapsed;
+
+      // ★フェーズ判定は「借入開始（利息期間含む）からの経過月」で行う
+      // 例：Phase1=3年(36ヶ月)、利息9ヶ月 → 元金開始後27ヶ月まではPhase1
+      const elapsedTotal = i - 1; // 借入開始(月1)からの経過月(0始まり)
+      const phase1EndTotal = phases[0].years*12; // 借入開始からPhase1終了まで
+      let cum=0, rm=phases[phases.length-1].rate/100/12;
+      for(let pi=0;pi<phases.length;pi++){
+        cum+=phases[pi].years*12;
+        if(elapsedTotal<cum){
+          const add = (elapsedTotal>=phase1EndTotal) ? stressAdd/100/12 : 0;
+          rm = (phases[pi].rate)/100/12 + add;
+          break;
+        }
+      }
+      // 最終フェーズ繰り返しの場合もstress適用
+      if(elapsedTotal>=phase1EndTotal){
+        let cumCheck=0, inPhase=false;
+        for(let pi=0;pi<phases.length;pi++){
+          cumCheck+=phases[pi].years*12;
+          if(elapsedTotal<cumCheck){inPhase=true;break;}
+        }
+        if(!inPhase) rm=phases[phases.length-1].rate/100/12+stressAdd/100/12;
+      }
+
+      // ★★ 元利金スタート月(elapsed===0)の残高は必ず借入総額を使う ★★
+      const calcBal = (elapsed===0) ? loan : balance;
+      const interest=calcBal*rm;
+      const pay=pmt(rm,rem,calcBal);
+      const prin=pay-interest;
+      balance=Math.max(0,balance-prin);
+      sched.push({m:i,phase:'re',rate:rm*1200,pay:Math.round(pay),
+        int:Math.round(interest),prin:Math.round(prin),bal:Math.round(balance)});
+    }
+  }
+  return {sched, repayMonths};
+}
+
+function getPayAtYr(sched, repayStartM, yr){
+  const target=repayStartM+yr*12+1;
+  const row=sched.find(s=>s.m===target);
+  return row ? row.pay : null;
+}
+
+// ═══════════════════════════════
+// メイン計算
+// ═══════════════════════════════
+let G = {}; // グローバル計算結果
+
+function calculate(){
+  const loanMan = gv('loan');
+  const totalYears = gi('years');
+  const mode = ge('mode').value;
+  const phases = getPhases();
+  const baseRate = phases[0].rate;
+  const phase1M = phases[0].years*12;
+
+  let repayStartM, drawMap;
+
+  if(mode==='split'){
+    repayStartM = gi('repayStart');
+    drawMap = getDrawMap();
+    // drawMapが空の場合は借入全額を月1に設定
+    if(!Object.keys(drawMap).length) drawMap={1:loanMan*10000};
+  } else {
+    repayStartM = 0;
+    drawMap = {1: loanMan*10000};
+  }
+
+  const repayMonths = totalYears*12 - repayStartM;
+  if(loanMan<=0||totalYears<=0||repayMonths<=0){
+    ge('sbar').innerHTML='<strong>入力値を確認してください</strong>';
+    return;
+  }
+
+  // メインシミュレーション
+  const {sched} = simulate(loanMan, totalYears, repayStartM, phases, drawMap, 0);
+
+  // 集計
+  const ioRows = sched.filter(s=>s.phase==='io');
+  const reRows = sched.filter(s=>s.phase==='re');
+  const totalPay = sched.reduce((a,s)=>a+s.pay,0);
+  const totalInt = totalPay - loanMan*10000;
+  const firstRepay = reRows[0]?.pay||0;
+  const firstRate  = phases[0].rate;
+
+  // 年収・家計
+  const totalInc = gv('inc1')*10000;
+  const annualRepay = firstRepay*12;
+  const ratio = totalInc>0 ? annualRepay/totalInc*100 : 0;
+  const monthHand = totalInc*(gv('takehome')/100)/12;
+  const burden = firstRepay+gv('food')+gv('kids')+gv('living')+gv('buffer');
+  const bal = monthHand-burden;
+
+  // 団信
+  const age1=gv('age1'), age2=gv('age2');
+  const danshinAdd = (age1>=51||age2>=51) ? 0.3 : 0;
+  const danshinDiff = danshinAdd>0
+    ? pmt((firstRate+danshinAdd)/100/12, repayMonths, loanMan*10000)
+      - pmt(firstRate/100/12, repayMonths, loanMan*10000)
+    : 0;
+
+  G = {loanMan,totalYears,repayStartM,repayMonths,phases,drawMap,
+       baseRate,phase1M,firstRepay,totalPay,totalInt,sched,
+       ioRows,reRows,ratio,bal,monthHand,burden};
+
+  // ── 結果タブ更新 ──
+  ge('r-monthly').textContent = fmt(firstRepay);
+  ge('r-sub').textContent = `当初金利 ${firstRate.toFixed(2)}% ／ 元金返済${repayMonths}ヶ月`;
+  ge('r-total').textContent = fmtM(totalPay);
+  ge('r-int').textContent = fmtM(totalInt);
+  ge('r-ratio').textContent = pct(ratio);
+  ge('r-balance').textContent = fmt(bal);
+  ge('r-balance-s').textContent = `手取${fmtM(monthHand)} - 支出${fmtM(burden)}`;
+  ge('r-main').textContent = fmt(firstRepay);
+  ge('r-main-s').textContent = `元利金等 初回月返済額`;
+  ge('r-co').textContent = fmtM(firstRepay*12);
+  ge('r-co-s').textContent = `月返済×12ヶ月（ボーナスなし）`;
+  ge('r-danshin').textContent = danshinAdd>0 ? '+'+fmt(danshinDiff) : '0円';
+  ge('r-danshin-s').textContent = danshinAdd>0 ? '51歳以上あり：0.3%上乗せ月差' : '50歳以下：上乗せなし';
+  ge('r-ioperiod').textContent = ioRows.length ? `${ioRows.length}ヶ月` : '0ヶ月';
+  ge('r-ioperiod-s').textContent = ioRows.length ? `利息のみ合計: ${fmtM(ioRows.reduce((a,s)=>a+s.pay,0))}` : '分割実行なし';
+
+  // ゲージ
+  const gfill=ge('r-gauge');
+  gfill.style.width=Math.min(ratio/40*100,100)+'%';
+  gfill.style.background=ratio<25?'#2E7D32':ratio<30?'#E65100':'#C62828';
+  ge('r-ratio-b').innerHTML = ratio<20 ? badge('good','無理のない水準')
+    : ratio<25 ? badge('good','比較的安定')
+    : ratio<30 ? badge('warn','やや注意')
+    : badge('bad','慎重確認');
+  ge('r-balance-b').innerHTML = bal>=100000?badge('good','余力あり')
+    :bal>=0?badge('warn','余力少なめ'):badge('bad','要見直し');
+
+  // フェーズテーブル
+  buildPhaseTable(phases, loanMan*10000, repayMonths);
+
+  // スケジュール
+  buildSchedule(sched);
+
+  // 顧客シート
+  buildCustomer();
+
+  // コメント
+  let cs=[];
+  if(ratio>=30) cs.push('返済比率がかなり重め。教育費・車買替が重なる時期は特に注意。');
+  else if(ratio>=25) cs.push('返済比率はやや高め。金利上昇シナリオも見せておきたい。');
+  else cs.push('返済比率は概ね許容範囲。「借りられる」と「気持ちよく払える」は別物。');
+  if(bal<0) cs.push('家計残額がマイナス。借入額・生活費の見直しが必要。');
+  else if(bal<50000) cs.push('家計残額は少なめ。突発支出に注意。');
+  else cs.push('家計残額に余力あり。繰上返済の話にもつなぎやすい。');
+  if(ioRows.length) cs.push(`利息のみ期間${ioRows.length}ヶ月あり。この期間の利息合計も提示しておきたい。`);
+  if(danshinAdd>0) cs.push('団信0.3%上乗せ対象。月差額だけでなく総額差も見せると効果的。');
+  if(totalYears>=40) cs.push('40年超返済は月々を抑えやすい一方、総返済額が大きい。月額と総額の両方を提示。');
+  ge('r-comment').textContent = cs.join(' ／ ');
+
+  const now=new Date();
+  ge('sbar').innerHTML=`計算完了 <strong>${now.toLocaleTimeString('ja-JP')}</strong>　元金返済${repayMonths}ヶ月`;
+
+  switchTab('result');
+}
+
+function badge(t,tx){ return `<span class="badge ${t}-b">${tx}</span>`; }
+
+function buildPhaseTable(phases, loan, repayMonths){
+  const tb=ge('phase-tbody'); tb.innerHTML='';
+  const sched=G.sched;
+  let cum=0;
+  for(let i=0;i<phases.length;i++){
+    const p=phases[i];
+    const phaseM=i<phases.length-1?p.years*12:repayMonths-cum;
+    if(phaseM<=0) break;
+    const rem=repayMonths-cum;
+    // ★フェーズ開始月の実際の残高をスケジュールから取得
+    const phaseStartM=G.repayStartM+cum;
+    const startRow=sched.find(s=>s.m===phaseStartM+1&&s.phase==='re');
+    const bal=startRow ? (startRow.bal+startRow.prin) : loan;
+    const pay=pmt(p.rate/100/12, rem, bal);
+    const tr=document.createElement('tr');
+    if(i===0) tr.className='hl';
+    tr.innerHTML=`<td>Phase${i+1}</td><td>${p.rate.toFixed(2)}%</td><td>${p.years}年</td><td>${fmt(pay)}</td>`;
+    tb.appendChild(tr);
+    cum+=phaseM;
+    if(cum>=repayMonths) break;
+  }
+}
+
+function buildSchedule(sched){
+  const tb=ge('sched-tbody'); tb.innerHTML='';
+  const show=Math.min(sched.length,60);
+  let prevRate=null;
+  for(let i=0;i<show;i++){
+    const s=sched[i];
+    const isIO=s.phase==='io';
+    const isSwitch=(!isIO && s.rate!==prevRate && !isIO);
+    const tr=document.createElement('tr');
+    tr.className=isIO?'io':isSwitch?'sw':'';
+    tr.innerHTML=`
+      <td>${s.m}</td>
+      <td>${s.rate?s.rate.toFixed(2):'-'}</td>
+      <td>${(s.pay/10000).toFixed(1)}万</td>
+      <td>${(s.int/10000).toFixed(1)}万</td>
+      <td>${(s.prin/10000).toFixed(1)}万</td>
+      <td>${Math.round(s.bal/10000)}万</td>`;
+    tb.appendChild(tr);
+    if(!isIO) prevRate=s.rate;
+  }
+}
+
+function buildCustomer(){
+  const {loanMan,totalYears,repayStartM,repayMonths,phases,drawMap,baseRate,phase1M} = G;
+
+  // 借入条件
+  ge('cust-cond').innerHTML=`
+    <div class="cond-item"><div class="cl">借入総額</div><div class="cv">${loanMan.toLocaleString()}万円</div></div>
+    <div class="cond-item"><div class="cl">借入期間</div><div class="cv">${totalYears}年</div></div>
+    <div class="cond-item"><div class="cl">当初金利</div><div class="cv">${baseRate.toFixed(2)}%</div></div>`;
+  ge('cust-phases').innerHTML='金利フェーズ：'+phases.map((p,i)=>`Phase${i+1}: ${p.years}年 ${p.rate}%`).join('　')
+    +`　／　元金返済開始: ${repayStartM}ヶ月後（返済${repayMonths}ヶ月）`;
+
+  // ── 期間別比較 ──
+  const compYears=[35, totalYears, 50];
+  const compLabels=[`35年`,`${totalYears}年\n★ご希望`,`50年\n(参考)`];
+  const yearPoints=[
+    {yr:0, label:'当初（元金スタート直後）'},
+    {yr:3, label:'4年目'},
+    {yr:9, label:'10年目'},
+    {yr:19,label:'20年目'},
+    {yr:34,label:'35年目'},
+    {yr:39,label:'40年目'},
+    {yr:49,label:'50年目'},
+  ];
+
+  // ヘッダー
+  const hdrRow=ge('cust-period-hdr');
+  hdrRow.innerHTML='<th style="text-align:left">タイミング</th>';
+  compYears.forEach((y,i)=>{
+    const isMain=(y===totalYears);
+    hdrRow.innerHTML+=`<th style="${isMain?'background:#E3F2FD;color:#1565C0':''}">${compLabels[i].replace('\n','<br>')}</th>`;
+  });
+  hdrRow.innerHTML+='<th>35年比</th>';
+
+  const scheds={};
+  compYears.forEach(y=>{
+    const {sched}=simulate(loanMan,y,repayStartM,phases,drawMap,0);
+    scheds[y]=sched;
+  });
+
+  const tb=ge('cust-period-body'); tb.innerHTML='';
+  yearPoints.forEach((pt,ri)=>{
+    const tr=document.createElement('tr');
+    let cells=`<td>${pt.label}</td>`;
+    const pays=[];
+    compYears.forEach(y=>{
+      const isMain=(y===totalYears);
+      const rm=y*12-repayStartM;
+      let pay=null;
+      if(pt.yr===0){
+        const row=scheds[y].find(s=>s.phase==='re');
+        pay=row?row.pay:null;
+      } else if(pt.yr*12<rm){
+        pay=getPayAtYr(scheds[y],repayStartM,pt.yr);
+      }
+      pays.push(pay);
+      if(pay===null){
+        cells+=`<td style="color:var(--muted);font-size:11px">－(完済)</td>`;
+      } else {
+        cells+=`<td class="${isMain?'main-col':''}">${pay.toLocaleString()}</td>`;
+      }
+    });
+    // 35年比
+    const p35=pays[0], pMain=pays[1];
+    if(p35&&pMain){
+      const diff=pMain-p35;
+      const cls=diff<0?'diff-pos':'diff-neg';
+      cells+=`<td class="${cls}">${diff>0?'+':''}${diff.toLocaleString()}</td>`;
+    } else { cells+='<td></td>'; }
+    tr.innerHTML=cells;
+    tb.appendChild(tr);
+  });
+
+  // ── ストレステスト ──
+  ge('st-main-hdr').textContent=`${totalYears}年`;
+  // ★ストレスは固定金利1.2/1.5/1.7%で借入総額・残り期間でPMT計算
+  const stressList=[
+    {rate:0,   label:'現行（Phase2金利）',      cls:'stress-row-0', isBase:true},
+    {rate:1.2, label:'金利 1.20%',              cls:'stress-row-1', isBase:false},
+    {rate:1.5, label:'金利 1.50%',              cls:'stress-row-2', isBase:false},
+    {rate:1.7, label:'金利 1.70%',              cls:'stress-row-3', isBase:false},
+  ];
+  const baseSched=scheds[totalYears];
+  const baseRow=baseSched.find(s=>s.phase==='re'&&s.m>repayStartM+phase1M);
+  const basePay4=baseRow?baseRow.pay:G.firstRepay;
+
+  const stb=ge('cust-stress-body'); stb.innerHTML='';
+  // 現行（Phase2金利）の月返済額を基準として取得
+  const basePay4_ref = basePay4;
+
+  stressList.forEach(st=>{
+    const tr=document.createElement('tr');
+    tr.className=st.cls;
+    const pays4={};
+
+    if(st.isBase){
+      // 現行：実際のシミュレーション結果を使用
+      [35,totalYears,50].forEach(y=>{
+        const sc=scheds[y];
+        const row=sc?sc.find(s=>s.phase==='re'&&s.m>repayStartM+phase1M):null;
+        pays4[y]=row?row.pay:null;
+      });
+    } else {
+      // 固定金利でPMT計算：借入総額・各期間の残り返済月数
+      [35,totalYears,50].forEach(y=>{
+        const repayM=y*12-repayStartM;
+        if(repayM<=0){ pays4[y]=null; return; }
+        // Phase1終了後の残高をスケジュールから取得
+        const sc=scheds[y];
+        const p2Row=sc?sc.find(s=>s.phase==='re'&&s.m===repayStartM+phase1M+1):null;
+        const p2Bal=p2Row?(p2Row.bal+p2Row.prin):loanMan*10000;
+        const remM=repayM-phase1M;
+        pays4[y]=remM>0?Math.round(pmt(st.rate/100/12,remM,p2Bal)):null;
+      });
+    }
+
+    const main4=pays4[totalYears]||0;
+    const diff=st.isBase?0:main4-basePay4_ref;
+    const yearly=diff*12;
+    const isStress=!st.isBase;
+    tr.innerHTML=`
+      <td>${st.label}</td>
+      <td class="${isStress?'stress-main':''}">${main4?main4.toLocaleString():'-'}</td>
+      <td>${pays4[35]?pays4[35].toLocaleString():'-'}</td>
+      <td class="${isStress?'stress-main':''}">${pays4[totalYears]?pays4[totalYears].toLocaleString():'-'}</td>
+      <td>${pays4[50]?pays4[50].toLocaleString():'-'}</td>
+      <td class="${isStress?'stress-diff':''}">${isStress?(diff>=0?'+':'')+diff.toLocaleString():'-'}</td>
+      <td class="${isStress?'stress-diff':''}">${isStress?(yearly>=0?'+':'')+yearly.toLocaleString():'-'}</td>`;
+    stb.appendChild(tr);
+  });
+}
+
+// ═══════════════════════════════
+// UI制御
+// ═══════════════════════════════
+function switchTab(id){
+  const ids=['input','result','schedule','customer','prepay'];
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',ids[i]===id));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  ge('tab-'+id).classList.add('active');
+  ge('float-btn').style.display=id==='input'?'flex':'none';
+  window.scrollTo(0,0);
+}
+
+function updateModeUI(){
+  const m=ge('mode').value;
+  ge('split-card').style.display=m==='split'?'':'none';
+  ge('normal-card').style.display=m==='normal'?'':'none';
+}
+
+function resetAll(){
+  const defs={
+    loan:4000,years:40,mode:'split',
+    d1t:0,d1a:4000,d2t:'',d2a:'',d3t:'',d3a:'',
+    d4t:'',d4a:'',d5t:'',d5a:'',
+    repayStart:0,
+    p1y:3,p1r:0.55,p2y:2,p2r:1.20,
+    p3y:'',p3r:'',p4y:'',p4r:'',p5y:'',p5r:'',
+    age1:35,age2:33,inc1:700,takehome:80,
+    food:70000,kids:30000,living:100000,buffer:30000
+  };
+  Object.entries(defs).forEach(([k,v])=>{const el=ge(k);if(el)el.value=v;});
+  updateModeUI();
+  ge('sbar').innerHTML='初期値に戻しました。計算するを押してください';
+}
+
+
+// ═══════════════════════════════
+// 繰上返済シミュレーション
+// ═══════════════════════════════
+let PREPAY_MODE = 'genkei';
+
+function setPrepayMode(mode){
+  PREPAY_MODE = mode;
+  ge('mode-genkei').classList.toggle('active', mode==='genkei');
+  ge('mode-tanshuku').classList.toggle('active', mode==='tanshuku');
+}
+
+function calcPrepay(){
+  if(!G || !G.sched || !G.sched.length){
+    alert('先に「計算する」を実行してください');
+    return;
+  }
+  const {loanMan,totalYears,repayStartM,repayMonths,phases,drawMap,sched} = G;
+
+  // 繰上返済設定を取得（元金開始からN年後）
+  const prepays = [];
+  for(let i=1;i<=3;i++){
+    const y=gv(`pr${i}y`), a=gv(`pr${i}a`);
+    if(y>0 && a>0) prepays.push({yearAfterRepay:y, amount:a*10000});
+  }
+  prepays.sort((a,b)=>a.yearAfterRepay-b.yearAfterRepay);
+
+  // 繰上返済なしの総支払
+  const totalNormal = G.total;
+
+  // 繰上返済ありのシミュレーション
+  const result = simulatePrepay(loanMan, totalYears, repayStartM, phases, drawMap, prepays, PREPAY_MODE);
+
+  // 残高表示を更新
+  for(let i=1;i<=3;i++){
+    const y=gv(`pr${i}y`), a=gv(`pr${i}a`);
+    if(y>0&&a>0){
+      const targetM = repayStartM + y*12;
+      const row = result.schedFull.find(s=>s.m===targetM&&s.phase==='re');
+      ge(`pr${i}bal`).textContent = row ? Math.round(row.bal/10000)+'万円' : '期間外';
+    } else {
+      ge(`pr${i}bal`).textContent = '－';
+    }
+  }
+
+  // 節約額表示
+  const saving = totalNormal - result.totalPay;
+  ge('pr-saving').textContent = saving>0 ? `${Math.round(saving/10000).toLocaleString()}万円お得` : '節約なし';
+  ge('pr-saving-sub').textContent = PREPAY_MODE==='genkei' ? '返済額軽減型' : `期間短縮型：${result.monthsSaved}ヶ月短縮`;
+  ge('pr-total-normal').textContent = fmtM(totalNormal);
+  ge('pr-total-after').textContent = fmtM(result.totalPay);
+
+  // タイムライン表示
+  buildPrepayTable(result, prepays, repayStartM);
+
+  // 期間短縮情報
+  if(PREPAY_MODE==='tanshuku'){
+    ge('tanshuku-info').style.display='';
+    const origEnd = repayStartM + repayMonths;
+    ge('tanshuku-detail').innerHTML =
+      `<b>当初の返済終了：</b>${Math.floor(origEnd/12)}年${origEnd%12}ヶ月目<br>` +
+      `<b>繰上後の返済終了：</b>${Math.floor(result.actualMonths/12)}年${result.actualMonths%12}ヶ月目<br>` +
+      `<b>短縮期間：</b><span style="color:var(--green);font-size:16px;font-weight:900">${result.monthsSaved}ヶ月（約${(result.monthsSaved/12).toFixed(1)}年）短縮</span>`;
+  } else {
+    ge('tanshuku-info').style.display='none';
+  }
+
+  ge('prepay-result').style.display='';
+  switchTab('prepay');
+}
+
+function simulatePrepay(loanMan, totalYears, repayStartM, phases, drawMap, prepays, mode){
+  const loan = loanMan*10000;
+  const repayMonths = totalYears*12 - repayStartM;
+  // ★Phase1終了は借入開始からの月数（利息期間含む）
+  const phase1End = phases[0].years*12;
+  let balance=0, schedFull=[], totalPay=0;
+  let currentRepayMonths = repayMonths; // 期間短縮型で変わる
+  let prepayIdx=0;
+
+  for(let i=1; i<=totalYears*12+repayStartM+5; i++){
+    balance += drawMap[i]||0;
+
+    // 繰上返済チェック（元金開始からN年後）
+    const elapsedRepay = i - repayStartM - 1;
+    if(elapsedRepay >= 0 && prepayIdx < prepays.length){
+      const pr = prepays[prepayIdx];
+      if(elapsedRepay === pr.yearAfterRepay*12){
+        const prAmount = Math.min(pr.amount, balance);
+        balance -= prAmount;
+        if(mode==='tanshuku'){
+          // 期間短縮：残りヶ月を再計算（月返済額は変えない）
+          const remBeforePr = currentRepayMonths - elapsedRepay;
+          const rateM = getPhaseRate(elapsedRepay, phases);
+          const newPay = pmt(rateM, remBeforePr, balance+prAmount); // 元の月返済
+          if(rateM>0){
+            // 新しい残り期間を逆算
+            const newRem = Math.ceil(-Math.log(1-balance*rateM/newPay)/Math.log(1+rateM));
+            currentRepayMonths = elapsedRepay + newRem;
+          } else {
+            currentRepayMonths = elapsedRepay + Math.ceil(balance/newPay);
+          }
+        }
+        // 繰上返済記録
+        schedFull.push({m:i,phase:'prepay',prAmount:prAmount,bal:Math.round(balance)});
+        prepayIdx++;
+      }
+    }
+
+    if(i<=repayStartM){
+      const rm = phases[0].rate/100/12;
+      const interest=balance*rm;
+      totalPay+=interest;
+      schedFull.push({m:i,phase:'io',rate:phases[0].rate,pay:Math.round(interest),bal:Math.round(balance)});
+    } else {
+      if(elapsedRepay >= currentRepayMonths) break;
+      const remNow = currentRepayMonths - elapsedRepay;
+      const rateM = getPhaseRate(elapsedRepay, phases, repayStartM);
+      const payNow = pmt(rateM, remNow, balance);
+      const prin = payNow - balance*rateM;
+      balance = Math.max(0, balance-prin);
+      totalPay += payNow;
+      schedFull.push({m:i,phase:'re',rate:rateM*1200,pay:Math.round(payNow),
+        int:Math.round(balance*rateM+prin*0),prin:Math.round(prin),bal:Math.round(balance)});
+      if(balance<1) break;
+    }
+  }
+
+  const actualMonths = schedFull.filter(s=>s.phase==='re').length + repayStartM;
+  const monthsSaved = (repayStartM+repayMonths) - actualMonths;
+
+  return {schedFull, totalPay:Math.round(totalPay), actualMonths, monthsSaved:Math.max(0,monthsSaved)};
+}
+
+function getPhaseRate(elapsed, phases, repayStartM=0){
+  // ★elapsedは元金開始からの経過月
+  // フェーズ判定は借入開始（利息期間含む）からの経過月で行う
+  const elapsedTotal = elapsed + repayStartM;
+  let cum=0;
+  for(const p of phases){
+    cum+=p.years*12;
+    if(elapsedTotal<cum) return p.rate/100/12;
+  }
+  return phases[phases.length-1].rate/100/12;
+}
+
+function buildPrepayTable(result, prepays, repayStartM){
+  const tb=ge('prepay-tbody'); tb.innerHTML='';
+  const {schedFull} = result;
+
+  // 繰上返済が発生する月のSet
+  const prepayMonths = new Set(schedFull.filter(s=>s.phase==='prepay').map(s=>s.m));
+
+  // 表示する月を選定
+  const keyMonths = new Set();
+  // 元金返済開始の最初の行
+  const firstRe = schedFull.find(s=>s.phase==='re');
+  if(firstRe) keyMonths.add(firstRe.m);
+  // 利息のみ期間（先頭）
+  schedFull.filter(s=>s.phase==='io').slice(0,2).forEach(s=>keyMonths.add(s.m));
+  // 繰上返済月とその直後の月
+  prepays.forEach(pr=>{
+    const target = repayStartM + pr.yearAfterRepay*12;
+    [target-1, target, target+1, target+2].forEach(m=>keyMonths.add(m));
+    prepayMonths.forEach(pm=>{ [pm, pm+1, pm+2].forEach(m=>keyMonths.add(m)); });
+  });
+  // 5年ごと（節目）
+  for(let y=5;y<=50;y+=5){
+    const m1=repayStartM+y*12, m2=m1+1;
+    keyMonths.add(m1); keyMonths.add(m2);
+  }
+  // 最後の3行
+  schedFull.filter(s=>s.phase==='re').slice(-3).forEach(s=>keyMonths.add(s.m));
+
+  let prevRate=null, prevPay=null;
+  const sortedMonths=[...keyMonths].sort((a,b)=>a-b);
+  let lastPrepayM = -1; // 直前に繰上返済があったか
+
+  sortedMonths.forEach(m=>{
+    // ── 💰 繰上返済実行行 ──
+    const prRow=schedFull.find(s=>s.m===m&&s.phase==='prepay');
+    if(prRow){
+      lastPrepayM = m;
+      const tr=document.createElement('tr');
+      tr.className='exec-row';
+      tr.innerHTML=`
+        <td class="label-cell">💰 繰上返済</td>
+        <td>－</td>
+        <td class="pay-cell">▲${Math.round(prRow.prAmount/10000).toLocaleString()}万円</td>
+        <td>${Math.round(prRow.bal/10000).toLocaleString()}万円</td>
+        <td style="font-size:10px">残高減少</td>`;
+      tb.appendChild(tr);
+    }
+
+    const row=schedFull.find(s=>s.m===m&&s.phase!=='prepay');
+    if(!row) return;
+
+    const isIO=row.phase==='io';
+    const isRateChange=!isIO&&row.rate!==prevRate&&prevRate!==null&&prevRate!=='io';
+    const isAfterPrepay=(m===lastPrepayM+1);
+
+    const tr=document.createElement('tr');
+    // クラス優先度: 繰上後 > 金利切替 > 通常
+    if(isAfterPrepay){
+      tr.className='after-row';
+    } else if(isRateChange){
+      tr.className='rate-row';
+    } else {
+      tr.className='normal-row';
+    }
+
+    const elapsedYr=m>repayStartM ? Math.floor((m-repayStartM-1)/12)+1 : 0;
+    const period=isIO?`利息期間`:`${elapsedYr}年目`;
+
+    // ラベル・備考
+    let note='';
+    if(isAfterPrepay) note='← 繰上後の新返済額';
+    else if(isRateChange) note='金利更新';
+
+    // 月返済セル（繰上後は大きく赤く表示）
+    const payCell = isIO
+      ? `<td>利息のみ</td>`
+      : `<td class="pay-cell">${row.pay.toLocaleString()}円</td>`;
+
+    // 前回との差分表示（返済額が変わった場合）
+    let diffHtml = '';
+    if(isAfterPrepay && prevPay && !isIO){
+      const diff = row.pay - prevPay;
+      diffHtml = diff!==0
+        ? `<span style="font-size:10px;color:${diff<0?'var(--green)':'var(--red)'}">
+            ${diff<0?'▼':'▲'}${Math.abs(diff).toLocaleString()}円</span>`
+        : '';
+    }
+
+    tr.innerHTML=`
+      <td class="label-cell">${period}（${m}ヶ月目）</td>
+      <td>${row.rate?row.rate.toFixed(2):'-'}</td>
+      ${isIO?'<td>利息のみ</td>':`<td class="pay-cell">${row.pay.toLocaleString()}円${diffHtml}</td>`}
+      <td>${Math.round(row.bal/10000).toLocaleString()}万円</td>
+      <td style="font-size:10px">${note}</td>`;
+    tb.appendChild(tr);
+
+    if(!isIO){
+      prevRate=row.rate;
+      prevPay=row.pay;
+    } else {
+      prevRate='io';
+    }
+  });
+}
+
+window.onload=()=>{updateModeUI();calculate();};
+</script>
+</body>
+</html>
